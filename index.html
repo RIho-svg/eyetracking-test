@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaze Tracking Example</title>
+    <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>視線トラッキングデモ</h1>
+    <canvas id="gazeCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gazeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // WebGazerの初期化
+        webgazer.setGazeListener((data, elapsedTime) => {
+            if (data) {
+                const x = data.x; // 視線のX座標
+                const y = data.y; // 視線のY座標
+
+                // キャンバスをクリア
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 視線の位置に円を描画
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = "red";
+                ctx.fill();
+            }
+        }).begin();
+    </script>
+</body>
+</html>
