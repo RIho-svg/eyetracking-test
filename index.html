@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>キャリブレーション付き視線トラッキング</title>
+  <title>視線トラッキング</title>
   <script src="https://cdn.jsdelivr.net/npm/webgazer"></script>
   <style>
     body {
@@ -86,7 +86,7 @@
           // キャンバスに視線を描画
           context.clearRect(0, 0, canvas.width, canvas.height);
           context.beginPath();
-          context.arc(x * 50, y * 50, 20, 0, 2 * Math.PI);
+          context.arc(x * 100, y * 100, 20, 0, 2 * Math.PI);
           context.fillStyle = 'rgba(255, 0, 0, 0.7)';
           context.fill();
         }
