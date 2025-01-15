@@ -3,104 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>キャリブレーション付き視線トラッキング</title>
+  <title>視線トラッキング - キャリブレーション</title>
   <script src="https://cdn.jsdelivr.net/npm/webgazer"></script>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background-color: #f0f0f0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-    }
-    .calibration-point {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: red;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
+      background-color: #f0f0f0;
     }
     canvas {
       position: absolute;
       top: 0;
       left: 0;
     }
+    .calibration-point {
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      border-radius: 50%;
+      position: absolute;
+      cursor: pointer;
+    }
+    #instruction {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <div id="calibration-container">
-    <div id="point1" class="calibration-point" style="top: 10%; left: 10%;"></div>
-    <div id="point2" class="calibration-point" style="top: 10%; left: 90%;"></div>
-    <div id="point3" class="calibration-point" style="top: 90%; left: 10%;"></div>
-    <div id="point4" class="calibration-point" style="top: 90%; left: 90%;"></div>
-    <div id="point5" class="calibration-point" style="top: 50%; left: 50%;"></div>
-  </div>
+  <div id="instruction">赤い点をクリックしてキャリブレーションを完了してください</div>
   <canvas id="gazeCanvas"></canvas>
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const canvas = document.getElementById('gazeCanvas');
-      const context = canvas.getContext('2d');
-      const points = document.querySelectorAll('.calibration-point');
-      let calibrationIndex = 0;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    const canvas = document.getElementById('gazeCanvas');
+    const context = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-      // WebGazerを初期化
-      webgazer.setGazeListener(null).begin();
+    const calibrationPoints = [
+      { x: 50, y: 50 },
+      { x: canvas.width - 50, y: 50 },
+      { x: canvas.width - 50, y: canvas.height - 50 },
+      { x: 50, y: canvas.height - 50 },
+      { x: canvas.width / 2, y: canvas.height / 2 }
+    ];
 
-      // キャリブレーションモード
-      function startCalibration() {
-        showPoint(calibrationIndex);
+    let currentPointIndex = 0;
 
-        points.forEach((point, index) => {
-          point.addEventListener('click', () => {
-            const rect = point.getBoundingClientRect();
-            webgazer.recordScreenPosition(rect.left + rect.width / 2, rect.top + rect.height / 2);
-            hidePoint(index);
+    // キャリブレーション用の点を作成
+    function createCalibrationPoint(x, y) {
+      const point = document.createElement('div');
+      point.className = 'calibration-point';
+      point.style.left = `${x - 10}px`;
+      point.style.top = `${y - 10}px`;
 
-            // 次のポイントを表示
-            calibrationIndex++;
-            if (calibrationIndex < points.length) {
-              showPoint(calibrationIndex);
-            } else {
-              finishCalibration();
-            }
-          });
-        });
-      }
+      point.addEventListener('click', () => {
+        webgazer.recordScreenPosition(x, y);
+        point.remove();
+        currentPointIndex++;
+        if (currentPointIndex < calibrationPoints.length) {
+          showCalibrationPoint(currentPointIndex);
+        } else {
+          finishCalibration();
+        }
+      });
 
-      function showPoint(index) {
-        points[index].style.display = 'block';
-      }
+      document.body.appendChild(point);
+    }
 
-      function hidePoint(index) {
-        points[index].style.display = 'none';
-      }
+    // 次のキャリブレーション点を表示
+    function showCalibrationPoint(index) {
+      const { x, y } = calibrationPoints[index];
+      createCalibrationPoint(x, y);
+    }
 
-      function finishCalibration() {
-        alert('キャリブレーション完了！視線トラッキングを開始します。');
-        webgazer.setGazeListener((data) => {
-          if (data) {
-            const x = data.x; // 視線のX座標
-            const y = data.y; // 視線のY座標
+    // キャリブレーション終了処理
+    function finishCalibration() {
+      document.getElementById('instruction').textContent = 'キャリブレーションが完了しました！';
+      webgazer.setGazeListener((data, elapsedTime) => {
+        if (data) {
+          const x = data.x;
+          const y = data.y;
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.beginPath();
+          context.arc(x, y, 20, 0, 2 * Math.PI);
+          context.fillStyle = 'rgba(0, 0, 255, 0.7)';
+          context.fill();
+        }
+      }).begin();
+    }
 
-            // キャンバスに視線を描画
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.beginPath();
-            context.arc(x, y, 20, 0, 2 * Math.PI);
-            context.fillStyle = 'rgba(255, 0, 0, 0.7)';
-            context.fill();
-          }
-        }).begin();
-      }
-
-      // キャリブレーションを開始
-      startCalibration();
-    });
+    // WebGazerを初期化してキャリブレーション開始
+    webgazer.begin();
+    showCalibrationPoint(currentPointIndex);
   </script>
 </body>
 </html>
