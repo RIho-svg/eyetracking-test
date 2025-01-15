@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>視線トラッキング</title>
+  <title>視線トラッキング - キャリブレーション</title>
   <script src="https://cdn.jsdelivr.net/npm/webgazer"></script>
   <style>
     body {
@@ -21,14 +21,13 @@
       left: 0;
     }
     .calibration-point {
-      width: 20px;
-      height: 20px;
-      background-color: red;
-      border-radius: 50%;
-      position: absolute;
-      cursor: pointer;
-      z-index: 10;
+        width: 15px;
+        height: 15px;
+        background-color: blue;
+        border: 2px solid white;
+        border-radius: 50%;
     }
+
     #instruction {
       position: absolute;
       top: 10px;
@@ -45,29 +44,34 @@
 <body>
   <div id="instruction">赤い点をクリックしてキャリブレーションを完了してください</div>
   <canvas id="gazeCanvas"></canvas>
-
   <script>
     const canvas = document.getElementById('gazeCanvas');
     const context = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    const calibrationPoints = [
-      { x: 50, y: 50 },
-      { x: canvas.width - 50, y: 50 },
-      { x: canvas.width - 50, y: canvas.height - 50 },
-      { x: 50, y: canvas.height - 50 },
-      { x: canvas.width / 2, y: canvas.height / 2 }
-    ];
-
+  
+    // キャリブレーションポイントの設定
+    const rows = 5; // 縦の分割数
+    const cols = 5; // 横の分割数
+    const calibrationPoints = [];
+  
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const x = (canvas.width / (cols - 1)) * col;
+        const y = (canvas.height / (rows - 1)) * row;
+        calibrationPoints.push({ x, y });
+      }
+    }
+  
     let currentPointIndex = 0;
-
+  
+    // キャリブレーション用の点を作成
     function createCalibrationPoint(x, y) {
       const point = document.createElement('div');
       point.className = 'calibration-point';
       point.style.left = `${x - 10}px`;
       point.style.top = `${y - 10}px`;
-
+  
       point.addEventListener('click', () => {
         webgazer.recordScreenPosition(x, y);
         point.remove();
@@ -78,19 +82,17 @@
           finishCalibration();
         }
       });
-
+  
       document.body.appendChild(point);
     }
-
+  
+    // 次のキャリブレーション点を表示
     function showCalibrationPoint(index) {
-      if (index < calibrationPoints.length) {
-        const { x, y } = calibrationPoints[index];
-        createCalibrationPoint(x, y);
-      } else {
-        console.error('キャリブレーションポイントのインデックスが範囲外です');
-      }
+      const { x, y } = calibrationPoints[index];
+      createCalibrationPoint(x, y);
     }
-
+  
+    // キャリブレーション終了処理
     function finishCalibration() {
       document.getElementById('instruction').textContent = 'キャリブレーションが完了しました！';
       webgazer.setGazeListener((data, elapsedTime) => {
@@ -105,11 +107,12 @@
         }
       }).begin();
     }
-
+  
+    // 初期化
     document.addEventListener('DOMContentLoaded', () => {
       webgazer.begin();
       showCalibrationPoint(currentPointIndex);
     });
-  </script>
+  </script>  
 </body>
 </html>
