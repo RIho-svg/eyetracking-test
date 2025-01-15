@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>視線トラッキング</title>
+  <title>視線トラッキング - キャリブレーション</title>
   <script src="https://cdn.jsdelivr.net/npm/webgazer"></script>
   <style>
     body {
@@ -15,16 +15,20 @@
       height: 100vh;
       background-color: #f0f0f0;
     }
-    .calibration-point {
+    canvas {
       position: absolute;
-      width: 15px;
-      height: 15px;
-      background-color: red;
-      border: 2px solid white;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
+      top: 0;
+      left: 0;
     }
-
+    .calibration-point {
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      border-radius: 50%;
+      position: absolute;
+      cursor: pointer;
+      z-index: 10;
+    }
     #instruction {
       position: absolute;
       top: 10px;
@@ -40,74 +44,71 @@
 </head>
 <body>
   <div id="instruction">赤い点をクリックしてキャリブレーションを完了してください</div>
+  <canvas id="gazeCanvas"></canvas>
+
   <script>
-    const rows = 5; // 縦の分割数
-    const cols = 5; // 横の分割数
-    const calibrationPoints = [];
-  
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const x = (window.innerWidth / (cols - 1)) * col;
-        const y = (window.innerHeight / (rows - 1)) * row;
-        calibrationPoints.push({ x, y });
-      }
-    }
-  
+    const canvas = document.getElementById('gazeCanvas');
+    const context = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const calibrationPoints = [
+      { x: 50, y: 50 },
+      { x: canvas.width - 50, y: 50 },
+      { x: canvas.width - 50, y: canvas.height - 50 },
+      { x: 50, y: canvas.height - 50 },
+      { x: canvas.width / 2, y: canvas.height / 2 }
+    ];
+
     let currentPointIndex = 0;
 
-    // 現在のキャリブレーションポイントを表示
-    function showCalibrationPoint(index) {
-      const point = calibrationPoints[index];
-      console.log(`Displaying calibration point at (${point.x}, ${point.y})`);
-      createCalibrationPoint(point.x, point.y);
-    }
-
-    // キャリブレーションポイントの作成
     function createCalibrationPoint(x, y) {
       const point = document.createElement('div');
       point.className = 'calibration-point';
-      point.style.left = `${x}px`;
-      point.style.top = `${y}px`;
-
-      console.log(`Creating calibration point at (${x}, ${y})`);
+      point.style.left = `${x - 10}px`;
+      point.style.top = `${y - 10}px`;
 
       point.addEventListener('click', () => {
-        console.log(`Calibration point clicked at (${x}, ${y})`);
-        webgazer.recordScreenPosition(x, y)
-          .then(() => {
-            console.log('Screen position recorded successfully.');
-            point.remove();
-            currentPointIndex++;
-            if (currentPointIndex < calibrationPoints.length) {
-              showCalibrationPoint(currentPointIndex);
-            } else {
-              finishCalibration();
-            }
-          })
-          .catch(err => {
-            console.error('Error recording screen position:', err);
-          });
+        webgazer.recordScreenPosition(x, y);
+        point.remove();
+        currentPointIndex++;
+        if (currentPointIndex < calibrationPoints.length) {
+          showCalibrationPoint(currentPointIndex);
+        } else {
+          finishCalibration();
+        }
       });
 
       document.body.appendChild(point);
     }
-  
-    // キャリブレーション完了時の処理
-    function finishCalibration() {
-      console.log('Calibration completed!');
-      document.getElementById('instruction').textContent = 'キャリブレーション完了！';
+
+    function showCalibrationPoint(index) {
+      if (index < calibrationPoints.length) {
+        const { x, y } = calibrationPoints[index];
+        createCalibrationPoint(x, y);
+      } else {
+        console.error('キャリブレーションポイントのインデックスが範囲外です');
+      }
     }
-  
-    // WebGazerの初期化と開始
-    window.addEventListener('load', () => {
-      webgazer.begin()
-        .then(() => {
-          console.log('WebGazer has started.');
-          showCalibrationPoint(currentPointIndex);
-        })
-        .catch(err => {
-          console.error('Failed to initialize WebGazer:', err);
-        });
+
+    function finishCalibration() {
+      document.getElementById('instruction').textContent = 'キャリブレーションが完了しました！';
+      webgazer.setGazeListener((data, elapsedTime) => {
+        if (data) {
+          const x = data.x;
+          const y = data.y;
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.beginPath();
+          context.arc(x, y, 20, 0, 2 * Math.PI);
+          context.fillStyle = 'rgba(0, 0, 255, 0.7)';
+          context.fill();
+        }
+      }).begin();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      webgazer.begin();
+      showCalibrationPoint(currentPointIndex);
     });
   </script>
 </body>
