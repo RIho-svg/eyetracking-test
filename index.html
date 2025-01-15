@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>視線トラッキング-</title>
+  <title>視線トラッキング</title>
   <script src="https://cdn.jsdelivr.net/npm/webgazer"></script>
   <style>
     body {
@@ -41,7 +41,6 @@
 <body>
   <div id="instruction">赤い点をクリックしてキャリブレーションを完了してください</div>
   <script>
-    // キャリブレーションポイントの設定
     const rows = 5; // 縦の分割数
     const cols = 5; // 横の分割数
     const calibrationPoints = [];
@@ -55,19 +54,22 @@
     }
   
     let currentPointIndex = 0;
-  
+
     // 現在のキャリブレーションポイントを表示
     function showCalibrationPoint(index) {
       const point = calibrationPoints[index];
+      console.log(`Displaying calibration point at (${point.x}, ${point.y})`);
       createCalibrationPoint(point.x, point.y);
     }
-  
+
     // キャリブレーションポイントの作成
     function createCalibrationPoint(x, y) {
       const point = document.createElement('div');
       point.className = 'calibration-point';
       point.style.left = `${x}px`;
       point.style.top = `${y}px`;
+
+      console.log(`Creating calibration point at (${x}, ${y})`);
 
       point.addEventListener('click', () => {
         console.log(`Calibration point clicked at (${x}, ${y})`);
@@ -97,7 +99,7 @@
     }
   
     // WebGazerの初期化と開始
-    document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('load', () => {
       webgazer.begin()
         .then(() => {
           console.log('WebGazer has started.');
