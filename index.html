@@ -1,20 +1,49 @@
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
-        <title>WebGazer デモも</title>
-        <script type="text/javascript" src="js/webgazer.js"></script>
-    </head>
-    <body>
-        <script>
-            webgazer.setGazeListener(function(data, elapsedTime) {
-                if (data == null) {
-                    return;
-                }
-                var xprediction = data.x;
-                var yprediction = data.y;
-                console.log(elapsedTime);
-            }).begin();
-        </script>
-    </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>視線トラッキングデモ</title>
+  <script src="https://cdn.jsdelivr.net/npm/webgazer"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gazeCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById('gazeCanvas');
+    const context = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // WebGazerを初期化
+    webgazer.setGazeListener((data, elapsedTime) => {
+      if (data) {
+        const x = data.x; // 視線のX座標
+        const y = data.y; // 視線のY座標
+
+        // キャンバスをクリアして新しい位置に円を描画
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.beginPath();
+        context.arc(x, y, 20, 0, 2 * Math.PI);
+        context.fillStyle = 'rgba(255, 0, 0, 0.7)';
+        context.fill();
+      }
+    }).begin();
+  </script>
+</body>
 </html>
