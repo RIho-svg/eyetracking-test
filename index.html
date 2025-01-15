@@ -27,6 +27,7 @@
       border-radius: 50%;
       position: absolute;
       cursor: pointer;
+      z-index: 10;
     }
     #instruction {
       position: absolute;
@@ -61,7 +62,6 @@
 
     let currentPointIndex = 0;
 
-    // キャリブレーション用の点を作成
     function createCalibrationPoint(x, y) {
       const point = document.createElement('div');
       point.className = 'calibration-point';
@@ -82,13 +82,15 @@
       document.body.appendChild(point);
     }
 
-    // 次のキャリブレーション点を表示
     function showCalibrationPoint(index) {
-      const { x, y } = calibrationPoints[index];
-      createCalibrationPoint(x, y);
+      if (index < calibrationPoints.length) {
+        const { x, y } = calibrationPoints[index];
+        createCalibrationPoint(x, y);
+      } else {
+        console.error('キャリブレーションポイントのインデックスが範囲外です');
+      }
     }
 
-    // キャリブレーション終了処理
     function finishCalibration() {
       document.getElementById('instruction').textContent = 'キャリブレーションが完了しました！';
       webgazer.setGazeListener((data, elapsedTime) => {
@@ -104,9 +106,10 @@
       }).begin();
     }
 
-    // WebGazerを初期化してキャリブレーション開始
-    webgazer.begin();
-    showCalibrationPoint(currentPointIndex);
+    document.addEventListener('DOMContentLoaded', () => {
+      webgazer.begin();
+      showCalibrationPoint(currentPointIndex);
+    });
   </script>
 </body>
 </html>
